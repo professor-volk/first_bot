@@ -7,11 +7,9 @@ from aiogram.fsm.state import default_state
 from states.states import FSM_my_class
 from aiogram.types import (CallbackQuery, InlineKeyboardButton,
                            InlineKeyboardMarkup, Message, PhotoSize)
-#from config_data.config import Config, load_config
-from database.database import teacher_dict, student_dict
-from database import services
 from keyboards.keyboard_utils import (markup_choose_status, markup_proof_teacher,
                                       markup_proof_student)
+from database.database import register_user, select_user
 
 # Инициализируем роутер уровня модуля
 router_other = Router()
@@ -23,16 +21,15 @@ router_other = Router()
 async def process_start_command(message: Message, state: FSMContext):
     await message.answer(text=LEXICON_RU['/delete'])
     await state.clear()
-    user_dict = services.user_db_get()
+    '''user_dict = services.user_db_get()
     if message.from_user.id in user_dict:
         del user_dict[message.from_user.id]
-        services.user_db_upload(user_dict)
+        services.user_db_upload(user_dict)'''
 
 # Этот хэндлер срабатывает на команду /start
 @router_other.message(CommandStart(), StateFilter(default_state))
 async def process_start_command(message: Message, state: FSMContext):
-    user_dict = services.user_db_get()
-    if message.from_user.id not in user_dict:
+    if not select_user(message.from_user.id):
         await message.answer(
             text=LEXICON_RU['/start'],
             reply_markup=markup_choose_status
@@ -82,10 +79,10 @@ async def process_gender_press(callback: CallbackQuery, state: FSMContext):
     # Удаляем сообщение с кнопками
     await callback.message.delete()
     user_id = callback.from_user.id
-    user_dict = services.user_db_get()
+    '''user_dict = services.user_db_get()
     user_dict[user_id] = deepcopy(teacher_dict)
     user_dict[user_id]['status'] = 'teacher'
-    services.user_db_upload(user_dict)
+    services.user_db_upload(user_dict)'''
     await callback.message.answer(
         text=LEXICON_RU['save_data']
     )   
@@ -101,10 +98,10 @@ async def process_gender_press(callback: CallbackQuery, state: FSMContext):
     # Удаляем сообщение с кнопками
     await callback.message.delete()
     user_id = callback.from_user.id
-    user_dict = services.user_db_get()
+    '''user_dict = services.user_db_get()
     user_dict[user_id] = deepcopy(student_dict)
     user_dict[user_id]['status'] = 'student'
-    services.user_db_upload(user_dict)
+    services.user_db_upload(user_dict)'''
     await callback.message.answer(
         text=LEXICON_RU['save_data']
     )   

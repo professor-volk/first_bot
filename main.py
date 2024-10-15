@@ -9,7 +9,7 @@ from aiogram.fsm.storage.redis import RedisStorage, Redis
 
 # Импортируем миддлвари
 # Импортируем вспомогательные функции для создания нужных объектов
-# ...
+from database import database
 # Импортируем хэндлеры (в них же роутеры)
 from handlers import admin_handlers, student_handlers, teacher_handlers, other_handlers
 
@@ -46,8 +46,7 @@ async def main():
     dp = Dispatcher(storage=storage)
 
     # Инициализируем другие объекты (пул соединений с БД, кеш и т.п.)
-    # ...
-
+    #database.db_start()
     # Помещаем нужные объекты в workflow_data диспетчера
     #dp.workflow_data.update(...)
 
