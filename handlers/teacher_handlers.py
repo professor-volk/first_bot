@@ -5,13 +5,16 @@ from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 from aiogram.filters import Command, StateFilter
 from lexicon.lexicon_ru import LEXICON_RU
-#from filters.filters import is_teacher
+from filters.filters import MyFilter
+from database import database as db
 
 router_teacher = Router()
 
 #Выбрана команда добавления ученика
-@router_teacher.message(Command(commands='add_student'))
+@router_teacher.message(Command(commands='add_student'), lambda message: MyFilter(message.from_user.id))
 async def add_student(message: Message, state: FSMContext):
+    await state.set_state(FSM_add_student.Name_user)
+    await message.answer(text=LEXICON_RU['add_student_name_user'])
     '''if is_teacher(message):
         await state.set_state(FSM_add_student.Name_user)
         await message.answer(text=LEXICON_RU['add_student_name_user'])
@@ -47,21 +50,21 @@ async def process_name_sent(message: Message, state: FSMContext):
 @router_teacher.message(StateFilter(FSM_add_student.Subject))
 async def process_name_sent(message: Message, state: FSMContext):
     await state.update_data(subject = message.text)
-    await message.answer(text=LEXICON_RU['add_student_finish'])
     d = await state.get_data()
     s1 = d['user_name']
     s2 = d['name']
     s3 = d['subject']
-    '''user_dict = services.user_db_get()
-    user_dict[message.from_user.id]['students'][s1] = deepcopy(student_for_teacher)
-    user_dict[message.from_user.id]['students'][s1]['name'] = s2
-    user_dict[message.from_user.id]['students'][s1]['subject'] = s3.split(',')
-    services.user_db_upload(user_dict)'''
+    if db.add_student(s1, s2, s3, message.from_user.id):
+        await message.answer(text=LEXICON_RU['add_student_finish'])
+    else:
+        await message.answer(text='Что-то пошло не так...')
     await state.clear()
 
 #Выбрана команда добавления урока
 @router_teacher.message(Command(commands='add_lesson'))
 async def add_student(message: Message, state: FSMContext):
+    #await state.set_state(FSM_add_student.Name_user)
+    await message.answer(text='Пока эта функция еще не добавлена(')
     '''if is_teacher(message):
         #await state.set_state(FSM_add_student.Name_user)
         await message.answer(text='Пока эта функция еще не добавлена(')

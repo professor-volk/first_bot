@@ -9,7 +9,7 @@ from aiogram.fsm.storage.redis import RedisStorage, Redis
 
 # Импортируем миддлвари
 # Импортируем вспомогательные функции для создания нужных объектов
-from database import database
+#from database import database
 # Импортируем хэндлеры (в них же роутеры)
 from handlers import admin_handlers, student_handlers, teacher_handlers, other_handlers
 

@@ -1,4 +1,5 @@
-def user_db_get():
-    with open('..database/database.txt') as f:
-        return dict(f.readline())
-user_db_get()
+def str_to_list(s: str) -> list:
+    return s.split(,)
+
+def list_to_str(l: list) -> str:
+    return

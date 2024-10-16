@@ -9,7 +9,7 @@ from aiogram.types import (CallbackQuery, InlineKeyboardButton,
                            InlineKeyboardMarkup, Message, PhotoSize)
 from keyboards.keyboard_utils import (markup_choose_status, markup_proof_teacher,
                                       markup_proof_student)
-from database.database import register_user, select_user
+from database import database as db
 
 # Инициализируем роутер уровня модуля
 router_other = Router()
@@ -29,7 +29,7 @@ async def process_start_command(message: Message, state: FSMContext):
 # Этот хэндлер срабатывает на команду /start
 @router_other.message(CommandStart(), StateFilter(default_state))
 async def process_start_command(message: Message, state: FSMContext):
-    if not select_user(message.from_user.id):
+    if not db.user_check(message.from_user.id):
         await message.answer(
             text=LEXICON_RU['/start'],
             reply_markup=markup_choose_status
@@ -78,11 +78,8 @@ async def process_gender_press(callback: CallbackQuery, state: FSMContext):
     await state.update_data(proof=callback.data)
     # Удаляем сообщение с кнопками
     await callback.message.delete()
-    user_id = callback.from_user.id
-    '''user_dict = services.user_db_get()
-    user_dict[user_id] = deepcopy(teacher_dict)
-    user_dict[user_id]['status'] = 'teacher'
-    services.user_db_upload(user_dict)'''
+    #Добавляем учителя в БД
+    db.register_user(callback.from_user.id, 'teacher')
     await callback.message.answer(
         text=LEXICON_RU['save_data']
     )   
@@ -97,11 +94,8 @@ async def process_gender_press(callback: CallbackQuery, state: FSMContext):
     await state.update_data(proof=callback.data)
     # Удаляем сообщение с кнопками
     await callback.message.delete()
-    user_id = callback.from_user.id
-    '''user_dict = services.user_db_get()
-    user_dict[user_id] = deepcopy(student_dict)
-    user_dict[user_id]['status'] = 'student'
-    services.user_db_upload(user_dict)'''
+    #Добавляем студента в БД
+    db.register_user(callback.from_user.id, 'student')
     await callback.message.answer(
         text=LEXICON_RU['save_data']
     )   
