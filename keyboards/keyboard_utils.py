@@ -1,7 +1,7 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-
 from lexicon.lexicon_ru import LEXICON_RU
+from database import database as db
 
 #Клавиатура выбора роли
 teacher_button = InlineKeyboardButton(
@@ -38,3 +38,29 @@ no_button_student = InlineKeyboardButton(
 )
 keyboard: list[list[InlineKeyboardButton]] = [[yes_button_student, no_button_student]]
 markup_proof_student = InlineKeyboardMarkup(inline_keyboard=keyboard)
+
+# формирование клавиатуры из списка учеников
+def create_students_keyboard(student_list: list, teacher_id: int) -> InlineKeyboardMarkup:
+    # Создаем объект клавиатуры
+    kb_builder = InlineKeyboardBuilder()
+    # Наполняем клавиатуру кнопками-закладками в порядке возрастания
+    for i in student_list:
+        st = db.student_check(int(i))
+        res = st.name + ', ' + st.user_name
+        kb_builder.row(InlineKeyboardButton(
+            text=res,
+            callback_data=str(teacher_id)+', ' + i
+        ))
+    return kb_builder.as_markup()
+
+# формирование клавиатуры из списка предметов
+def create_subjects_keyboard(subject_list: str) -> InlineKeyboardMarkup:
+    # Создаем объект клавиатуры
+    kb_builder = InlineKeyboardBuilder()
+    # Наполняем клавиатуру кнопками-закладками в порядке возрастания
+    for i in subject_list:
+        kb_builder.row(InlineKeyboardButton(
+            text=i,
+            callback_data=i
+        ))
+    return kb_builder.as_markup()

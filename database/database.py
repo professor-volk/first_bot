@@ -61,6 +61,10 @@ def student_check(student_id: int):
     student = session.query(Students).filter(Students.id == student_id).first() 
     return student
 
+def students_list_get(teacher_id: int) -> str:
+    teacher = session.query(Teacher).filter(Teacher.id == teacher_id).first() 
+    return teacher.students
+
 def add_student_to_teacher(student_id: int, teacher_id: int):
     #считать список студентов у учителя
     teacher = session.query(Teacher).filter(Teacher.id == teacher_id).first() 

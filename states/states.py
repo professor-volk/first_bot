@@ -18,11 +18,10 @@ class FSM_add_student(StatesGroup):
 
 #Класс для добавления урока
 class FSM_add_less(StatesGroup):
-    Sudent = State() #Выбор роли
-    Subject = State() # Подтверждение учителя
+    Student = State() # Выбор студента
+    Subject = State() # Выбор предмета
     Name_less = State() # Подтверждение ученика
     Data = State() # Дата ближайшего занятия
-    Period = State() # Частота занятий
     Time = State() # С какого по какое время
     Price = State() # Стоимость занятия
     Memo_less = State() # Сколько раз нужно напоминать об уроке
