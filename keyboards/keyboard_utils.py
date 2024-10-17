@@ -64,3 +64,27 @@ def create_subjects_keyboard(subject_list: str) -> InlineKeyboardMarkup:
             callback_data=i
         ))
     return kb_builder.as_markup()
+
+#Клавиатура выбора количества напоминаний
+zero_button = InlineKeyboardButton(
+    text='0',
+    callback_data='0'
+)
+one_button = InlineKeyboardButton(
+    text='1',
+    callback_data='1'
+)
+two_button = InlineKeyboardButton(
+    text='2',
+    callback_data='2'
+)
+three_button = InlineKeyboardButton(
+    text='3',
+    callback_data='3'
+)
+four_button = InlineKeyboardButton(
+    text='4',
+    callback_data='4'
+)
+keyboard: list[list[InlineKeyboardButton]] = [[zero_button, one_button, two_button, three_button, four_button]]
+markup_memo_less = InlineKeyboardMarkup(inline_keyboard=keyboard)

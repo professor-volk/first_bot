@@ -127,29 +127,44 @@ async def process_simple_calendar(callback_query: CallbackQuery, callback_data: 
         callback_query.message.delete()
         s = date.strftime("%d/%m/%Y")
         await state.update_data(data_less = s),
-        await callback_query.message.answer(
-            text='Выберите время начала  и время окончания занятия: '
-        )
-        await state.set_state(FSM_add_less.Time)
+        await callback_query.message.answer(text='Во сколько занятие начинается?'
+                                            'Введите время в формате чч:мм, например 7:23 или 19:30')
+        await state.set_state(FSM_add_less.Time_start)
+
+# проверяем, написано ли время, и переходим опять к записи времени (конца)
+@router_teacher.message(StateFilter(FSM_add_less.Time_start), F.text.split(':')[0].isdigit() & F.text.split(':')[1].isdigit())
+async def less_choose_subject(message:Message, state: FSMContext):
+    await state.update_data(time_start = message.text)
+    await message.answer(text='Во сколько занятие заканчивается?'
+                                            'Введите время в формате чч:мм, например 7:23 или 19:30')
+    await state.set_state(FSM_add_less.Time_end)
 
 # проверяем, выбрано ли время и переходим к вводу цены
-@router_teacher.message(StateFilter(FSM_add_less.Time))
+@router_teacher.message(StateFilter(FSM_add_less.Time_end), F.text.split(':')[0].isdigit() & F.text.split(':')[1].isdigit())
 async def less_choose_subject(message:Message, state: FSMContext):
+    await state.update_data(time_end = message.text)
+    await message.answer(text='Введите стоимость занятия в рублях. Вводите только число.')
     await state.set_state(FSM_add_less.Price)
-    #выбор предмета из списка
-    await message.answer(text='Выбор предмета')
+    
 
-@router_teacher.message(StateFilter(FSM_add_less.Price))
+@router_teacher.message(StateFilter(FSM_add_less.Price), F.text.isdigit())
 async def less_choose_subject(message:Message, state: FSMContext):
+    await state.update_data(price = message.text)
+    await message.answer(
+        text='Выберите, сколько раз нужно напоминать о занятии:',
+        reply_markup=keyboard_utils.markup_memo_less
+    )
     await state.set_state(FSM_add_less.Memo_less)
     #выбор предмета из списка
-    await message.answer(text='Выбор предмета')
+    
 
-@router_teacher.message(StateFilter(FSM_add_less.Memo_less))
-async def less_choose_subject(message:Message, state: FSMContext):
+@router_teacher.callback_query(StateFilter(FSM_add_less.Memo_less), F.data.in_(['0','1','2','3','4']))
+async def less_choose_subject(callback:CallbackQuery, state: FSMContext):
+    await callback.message.delete()
+    await state.update_data(memo_less = callback.data)
+    await callback.message.answer(text='Выбор предмета')
     await state.set_state(FSM_add_less.Memo_1_t)
-    #выбор предмета из списка
-    await message.answer(text='Выбор предмета')
+    
 
 @router_teacher.message(StateFilter(FSM_add_less.Memo_1_t))
 async def less_choose_subject(message:Message, state: FSMContext):

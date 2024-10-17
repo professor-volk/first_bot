@@ -22,7 +22,8 @@ class FSM_add_less(StatesGroup):
     Subject = State() # Выбор предмета
     Name_less = State() # Подтверждение ученика
     Data = State() # Дата ближайшего занятия
-    Time = State() # С какого по какое время
+    Time_start = State() # С какого 
+    Time_end = State() # по какое время
     Price = State() # Стоимость занятия
     Memo_less = State() # Сколько раз нужно напоминать об уроке
     Memo_1_t = State() # Для каждого из напоминаний нужно выбрать, за какое время до занятия и кому напоминать
