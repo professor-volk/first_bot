@@ -2,6 +2,7 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from lexicon.lexicon_ru import LEXICON_RU
 from database import database as db
+from aiogram.filters.callback_data import CallbackData
 
 #Клавиатура выбора роли
 teacher_button = InlineKeyboardButton(
@@ -51,17 +52,23 @@ no_button = InlineKeyboardButton(
 keyboard: list[list[InlineKeyboardButton]] = [[yes_button, no_button]]
 markup_memo_pay = InlineKeyboardMarkup(inline_keyboard=keyboard)
 
+class StudentCallback(CallbackData, prefix='students'):
+    student_id: int
+
+class SubjectCallback(CallbackData, prefix='subjects'):
+    sub_name: str
+
 # формирование клавиатуры из списка учеников
-def create_students_keyboard(student_list: list, teacher_id: int) -> InlineKeyboardMarkup:
+def create_students_keyboard(student_list: list) -> InlineKeyboardMarkup:
     # Создаем объект клавиатуры
     kb_builder = InlineKeyboardBuilder()
-    # Наполняем клавиатуру кнопками-закладками в порядке возрастания
+    # Наполняем клавиатуру списком учеников
     for i in student_list:
         st = db.student_check(int(i))
         res = st.name + ', ' + st.user_name
         kb_builder.row(InlineKeyboardButton(
             text=res,
-            callback_data=str(teacher_id)+', ' + i
+            callback_data = StudentCallback(student_id=i).pack()
         ))
     return kb_builder.as_markup()
 
@@ -69,11 +76,11 @@ def create_students_keyboard(student_list: list, teacher_id: int) -> InlineKeybo
 def create_subjects_keyboard(subject_list: str) -> InlineKeyboardMarkup:
     # Создаем объект клавиатуры
     kb_builder = InlineKeyboardBuilder()
-    # Наполняем клавиатуру кнопками-закладками в порядке возрастания
+    # Наполняем клавиатуру списком предметов
     for i in subject_list:
         kb_builder.row(InlineKeyboardButton(
             text=i,
-            callback_data=i
+            callback_data = SubjectCallback(sub_name=i).pack()
         ))
     return kb_builder.as_markup()
 
