@@ -60,7 +60,7 @@ async def process_name_sent(message: Message, state: FSMContext):
     if db.add_student(s1, s2, s3, message.from_user.id):
         await message.answer(text=LEXICON_RU['add_student_finish'])
     else:
-        await message.answer(text='Что-то пошло не так...')
+        await message.answer(text=LEXICON_RU['err_add_student'])
     await state.clear()
 
 #Выбрана команда добавления урока
@@ -72,7 +72,7 @@ async def add_lesson(message: Message, state: FSMContext):
     student_list = db.students_list_get(message.from_user.id).split(',')
     # Формируем клавиатуру учеников в формате: Имя, юзер нэйм
     await message.answer(
-        text='Выберите ученика из списка: ',
+        text=LEXICON_RU['add_less_add_student'],
         reply_markup=keyboard_utils.create_students_keyboard(student_list, message.from_user.id)
     )
 
@@ -85,12 +85,12 @@ async def less_choose_student(callback: CallbackQuery, state: FSMContext):
         await callback.message.delete() # удаляем сообщение с кнопками
         subject_list = db.student_check(int(button_press[1])).subject.split(',') # получаем список предметов
         await callback.message.answer(
-            text = 'Выберите предмет из списка: ',
+            text = LEXICON_RU['add_less_add_subject'],
             reply_markup = keyboard_utils.create_subjects_keyboard(subject_list)
         )
         await state.set_state(FSM_add_less.Subject)
     else:
-        await callback.message.answer(text='Для выбора ученика, пожалуйста, пользуйтесь кнопками')
+        await callback.message.answer(text=LEXICON_RU['add_less_add_student_err'])
 
 # получаем выбранный предмет и переходим к вводу названия занятия
 @router_teacher.callback_query(StateFilter(FSM_add_less.Subject))
@@ -98,10 +98,7 @@ async def less_choose_subject(callback: CallbackQuery, state: FSMContext):
     # Добавить проверку, нажата кнопка или нет!!!
     await state.update_data(subject=callback.data) # запоминаем, какой предмет выбран
     await callback.message.delete() # удаляем сообщение с кнопками
-    await callback.message.answer(text = 'Введите, как будет называться ваш урок (именно так он будет'
-                                  'отражаться в рассписании. Это может быть что-то вроде "Маша ЕГЭ"'
-                                  'или "Ярослав 7 класс", чтобы вам сразу было понятно, что это за'
-                                  'занятие. Постарайтесь не использовать много букав)')
+    await callback.message.answer(text = LEXICON_RU['add_less_add_name_less'])
     await state.set_state(FSM_add_less.Name_less)
     #выбор предмета из списка
 
@@ -110,7 +107,7 @@ async def less_choose_subject(callback: CallbackQuery, state: FSMContext):
 async def less_choose_subject(message:Message, state: FSMContext):
     await state.update_data(name_less=message.text)
     await message.answer(
-        text='Выберите дату ближайшего занятия: ',
+        text=LEXICON_RU['add_less_add_data'],
         reply_markup=await SimpleCalendar(locale='ru_RU.utf8').start_calendar()
     )
     await state.set_state(FSM_add_less.Data)
@@ -127,38 +124,35 @@ async def process_simple_calendar(callback_query: CallbackQuery, callback_data: 
         callback_query.message.delete()
         s = date.strftime("%d/%m/%Y")
         await state.update_data(data_less = s),
-        await callback_query.message.answer(text='Во сколько занятие начинается?'
-                                            'Введите время в формате чч:мм, например 7:23 или 19:30')
+        await callback_query.message.answer(text = LEXICON_RU['add_less_add_time_start'])
         await state.set_state(FSM_add_less.Time_start)
 
 # проверяем, написано ли время, и переходим опять к записи времени (конца)
 @router_teacher.message(StateFilter(FSM_add_less.Time_start), F.text.split(':')[0].isdigit() & F.text.split(':')[1].isdigit())
 async def less_choose_subject(message:Message, state: FSMContext):
     await state.update_data(time_start = message.text)
-    await message.answer(text='Во сколько занятие заканчивается?'
-                                            'Введите время в формате чч:мм, например 7:23 или 19:30')
+    await message.answer(text=LEXICON_RU['add_less_add_time_end'])
     await state.set_state(FSM_add_less.Time_end)
 
 # проверяем, выбрано ли время и переходим к вводу цены
 @router_teacher.message(StateFilter(FSM_add_less.Time_end), F.text.split(':')[0].isdigit() & F.text.split(':')[1].isdigit())
 async def less_choose_subject(message:Message, state: FSMContext):
     await state.update_data(time_end = message.text)
-    await message.answer(text='Введите стоимость занятия в рублях. Вводите только число.')
+    await message.answer(text = LEXICON_RU['add_less_add_price'])
     await state.set_state(FSM_add_less.Price)
     
-
+# проверяем, введена ли цена и переходим к выбору количества напоминаний
 @router_teacher.message(StateFilter(FSM_add_less.Price), F.text.isdigit())
 async def less_choose_subject(message:Message, state: FSMContext):
     await state.update_data(price = message.text)
     await message.answer(
-        text='Выберите, сколько раз нужно напоминать о занятии:',
-        reply_markup=keyboard_utils.markup_memo_less
+        text = LEXICON_RU['add_less_add_memo_less'],
+        reply_markup = keyboard_utils.markup_memo_less
     )
     await state.set_state(FSM_add_less.Memo_less)
-    #выбор предмета из списка
     
-
-@router_teacher.callback_query(StateFilter(FSM_add_less.Memo_less), F.data.in_(['0','1','2','3','4']))
+# проверяем, нажата ли кнопка и переходим к добавлению напоминания
+@router_teacher.callback_query(StateFilter(FSM_add_less.Memo_less), F.data.in_(['1','2','3','4']))
 async def less_choose_subject(callback:CallbackQuery, state: FSMContext):
     await callback.message.delete()
     await state.update_data(memo_less = callback.data)
@@ -166,53 +160,42 @@ async def less_choose_subject(callback:CallbackQuery, state: FSMContext):
     await state.set_state(FSM_add_less.Memo_1_t)
     
 
-@router_teacher.message(StateFilter(FSM_add_less.Memo_1_t))
-async def less_choose_subject(message:Message, state: FSMContext):
-    await state.set_state(FSM_add_less.Memo_1_h)
-    #выбор предмета из списка
-    await message.answer(text='Выбор предмета')
-
-@router_teacher.message(StateFilter(FSM_add_less.Memo_1_h))
-async def less_choose_subject(message:Message, state: FSMContext):
-    await state.set_state(FSM_add_less.Memo_2_t)
-    #выбор предмета из списка
-    await message.answer(text='Выбор предмета')
-
-@router_teacher.message(StateFilter(FSM_add_less.Memo_2_t))
-async def less_choose_subject(message:Message, state: FSMContext):
-    await state.set_state(FSM_add_less.Memo_2_h)
-    #выбор предмета из списка
-    await message.answer(text='Выбор предмета')
-
-@router_teacher.message(StateFilter(FSM_add_less.Memo_2_h))
-async def less_choose_subject(message:Message, state: FSMContext):
-    await state.set_state(FSM_add_less.Memo_3_t)
-    #выбор предмета из списка
-    await message.answer(text='Выбор предмета')
-
-@router_teacher.message(StateFilter(FSM_add_less.Memo_3_t))
-async def less_choose_subject(message:Message, state: FSMContext):
-    await state.set_state(FSM_add_less.Memo_3_h)
-    #выбор предмета из списка
-    await message.answer(text='Выбор предмета')
-
-@router_teacher.message(StateFilter(FSM_add_less.Memo_3_h))
-async def less_choose_subject(message:Message, state: FSMContext):
-    await state.set_state(FSM_add_less.Memo_4_t)
-    #выбор предмета из списка
-    await message.answer(text='Выбор предмета')
-
-@router_teacher.message(StateFilter(FSM_add_less.Memo_4_t))
-async def less_choose_subject(message:Message, state: FSMContext):
-    await state.set_state(FSM_add_less.Memo_4_h)
-    #выбор предмета из списка
-    await message.answer(text='Выбор предмета')
-
-@router_teacher.message(StateFilter(FSM_add_less.Memo_4_h))
-async def less_choose_subject(message:Message, state: FSMContext):
+# проверяем, нажата ли кнопка и переходим к напоминанию об оплате
+@router_teacher.callback_query(StateFilter(FSM_add_less.Memo_less), F.data.in_(['0']))
+async def less_choose_subject(callback:CallbackQuery, state: FSMContext):
+    await callback.message.delete()
+    await state.update_data(memo_less = callback.data)
+    await callback.message.answer(
+        text=LEXICON_RU['add_less_add_memo_pay'],
+        reply_markup = keyboard_utils.markup_memo_pay
+        )
     await state.set_state(FSM_add_less.Memo_pay)
-    #выбор предмета из списка
-    await message.answer(text='Выбор предмета')
+
+# если нажата кнопка "да" 
+@router_teacher.callback_query(StateFilter(FSM_add_less.Memo_pay), F.data.in_(['yes']))
+async def less_choose_subject(callback:CallbackQuery, state: FSMContext):
+    await callback.message.delete()
+    await state.update_data(memo_pay = True)
+    #Вносим информацию в БД!!!
+    await callback.message.answer(text=LEXICON_RU['add_less_end'])
+    await state.clear()
+
+# если нажата кнопка "нет" 
+@router_teacher.callback_query(StateFilter(FSM_add_less.Memo_pay), F.data.in_(['no']))
+async def less_choose_subject(callback:CallbackQuery, state: FSMContext):
+    await callback.message.delete()
+    await state.update_data(memo_pay = False)
+    #Вносим информацию в БД!!!
+    await callback.message.answer(text=LEXICON_RU['add_less_end'])
+    await state.clear()
+
+# если не нажата кнопка
+@router_teacher.callback_query(StateFilter(FSM_add_less.Memo_pay))
+async def less_choose_subject(callback:CallbackQuery, state: FSMContext):
+    await callback.message.answer(text=LEXICON_RU['err_add_less_add_memo_pay'])
+    
+
+
 
 
 '''@router_teacher.message(is_teacher)

@@ -39,6 +39,18 @@ no_button_student = InlineKeyboardButton(
 keyboard: list[list[InlineKeyboardButton]] = [[yes_button_student, no_button_student]]
 markup_proof_student = InlineKeyboardMarkup(inline_keyboard=keyboard)
 
+#Клавиатура для напоминаний об оплате
+yes_button = InlineKeyboardButton(
+    text='Да',
+    callback_data='yes'
+)
+no_button = InlineKeyboardButton(
+    text='Нет',
+    callback_data='no'
+)
+keyboard: list[list[InlineKeyboardButton]] = [[yes_button, no_button]]
+markup_memo_pay = InlineKeyboardMarkup(inline_keyboard=keyboard)
+
 # формирование клавиатуры из списка учеников
 def create_students_keyboard(student_list: list, teacher_id: int) -> InlineKeyboardMarkup:
     # Создаем объект клавиатуры
