@@ -7,8 +7,7 @@ from aiogram.fsm.state import default_state
 from states.states import FSM_my_class
 from aiogram.types import (CallbackQuery, InlineKeyboardButton,
                            InlineKeyboardMarkup, Message, PhotoSize)
-from keyboards.keyboard_utils import (markup_choose_status, markup_proof_teacher,
-                                      markup_proof_student)
+from keyboards import keyboard_utils
 from database import database as db
 
 # Инициализируем роутер уровня модуля
@@ -31,8 +30,8 @@ async def process_start_command(message: Message, state: FSMContext):
 async def process_start_command(message: Message, state: FSMContext):
     if not db.user_check(message.from_user.id):
         await message.answer(
-            text=LEXICON_RU['/start'],
-            reply_markup=markup_choose_status
+            text = LEXICON_RU['/start'],
+            reply_markup = keyboard_utils.markup_choose_status
         )
         await state.set_state(FSM_my_class.Choose_status)
     else:
@@ -50,7 +49,7 @@ async def process_proof_teacher(callback: CallbackQuery, state: FSMContext):
     await callback.message.delete()
     await callback.message.answer(
         text = LEXICON_RU['teacher_proof'],
-        reply_markup=markup_proof_teacher
+        reply_markup = keyboard_utils.markup_proof_teacher
     )
     await state.set_state(FSM_my_class.Wait_proof_teacher)
 
@@ -61,7 +60,7 @@ async def process_proof_student(callback: CallbackQuery, state: FSMContext):
     await callback.message.delete()
     await callback.message.answer(
         text = LEXICON_RU['student_proof'],
-        reply_markup=markup_proof_student
+        reply_markup = keyboard_utils.markup_proof_student
     )
     await state.set_state(FSM_my_class.Wait_proof_student)
 

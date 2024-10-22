@@ -113,6 +113,10 @@ def student_check(student_id: int):
     student = session.query(Students).filter(Students.id == student_id).first() 
     return student
 
+def lesson_check(lesson_id: int): 
+    lesson = session.query(Lessons).filter(Lessons.id == lesson_id).first() 
+    return lesson
+
 def students_list_get(teacher_id: int) -> str:
     teacher = session.query(Teacher).filter(Teacher.id == teacher_id).first() 
     return teacher.students

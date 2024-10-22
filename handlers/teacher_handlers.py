@@ -358,8 +358,20 @@ async def err_less_choose_memo_pay(message:Message, bot: Bot):
         message_id = message.message_id-1
     )
     
+#Выбрана команда просмотра расписания
+@router_teacher.message(Command(commands='show_schedule'), lambda message: MyFilter(message.from_user.id))
+async def show_schedule(message: Message):
+    await message.answer(
+        text='Вот твое расписание',
+        reply_markup=keyboard_utils.create_schedule(message.from_user.id, False)
+    )
 
-
+#Выбрана команда просмотра расписания
+@router_teacher.callback_query(keyboard_utils.LessonCallback.filter())
+async def show_schedule(callback: CallbackQuery, state: FSMContext, 
+                        callback_data: keyboard_utils.SubjectCallback):
+    await callback.message.answer(text = callback_data.pack())
+    #выбор предмета из списка
 
 
 '''@router_teacher.message(is_teacher)
