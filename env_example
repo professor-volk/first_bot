@@ -1,0 +1,7 @@
+BOT_TOKEN=123456789:ABCDEFGalskdjalsdkj1qowijd2klsjLSJDslk
+ADMIN_IDS=`12345678
+
+DATABASE='db_name'
+DB_HOST='127.0.0.1'
+DB_USER='name_user'
+DB_PASSWORD='password'

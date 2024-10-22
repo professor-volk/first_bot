@@ -151,11 +151,14 @@ async def less_choose_subject(callback: CallbackQuery, state: FSMContext, bot: B
 
 # если не была нажата кнопка с предметом
 @router_teacher.message(StateFilter(FSM_add_less.Subject))
-async def err_less_choose_student(message: Message, bot: Bot, state: FSMContext):
-    await bot.delete_message(chat_id = message.chat.id, message_id = message.message_id) # Удаляем неправильное сообщение 
+async def err_less_choose_subject(message: Message, bot: Bot, state: FSMContext):
+    # Удаляем неправильное сообщение 
+    await bot.delete_message(chat_id = message.chat.id, message_id = message.message_id) 
+    # получаем список предметов
     student = await state.get_data()
     student = student['student'].split(',')[0]
-    subject_list = db.student_check(int(student)).subject.split(',') # получаем список предметов
+    subject_list = db.student_check(int(student)).subject.split(',') 
+    #Редактируем сообщение с кнопками
     await bot.edit_message_text(
         text = LEXICON_RU['add_less_add_subject_err'] + ' ' + LEXICON_RU['add_less_add_subject'], 
         reply_markup=keyboard_utils.create_subjects_keyboard(subject_list),
@@ -165,7 +168,7 @@ async def err_less_choose_student(message: Message, bot: Bot, state: FSMContext)
 
 # получаем название занятия и переходим к вводу даты
 @router_teacher.message(StateFilter(FSM_add_less.Name_less))
-async def less_choose_subject(message:Message, state: FSMContext, bot: Bot):
+async def less_choose_date(message:Message, state: FSMContext, bot: Bot):
     await state.update_data(name_less=message.text)
     await message.delete()
     await bot.delete_message(chat_id = message.chat.id, message_id = message.message_id-1) # Удаляем предыдущее сообщение 
@@ -200,18 +203,30 @@ async def process_simple_calendar(callback_query: CallbackQuery, callback_data: 
         await callback_query.message.answer(text = LEXICON_RU['add_less_add_time_start'])
         await state.set_state(FSM_add_less.Time_start)
 
+#Если дата не выбрана
+@router_teacher.message(StateFilter(FSM_add_less.Data))
+async def err_less_choose_date(message: Message):
+    await message.delete()
+
 # проверяем, написано ли время, и переходим опять к записи времени (конца)
 @router_teacher.message(StateFilter(FSM_add_less.Time_start), F.text.split(':')[0].isdigit() & F.text.split(':')[1].isdigit())
-async def less_choose_subject(message:Message, state: FSMContext, bot: Bot):
+async def less_choose_time(message:Message, state: FSMContext, bot: Bot):
     await state.update_data(time_start = message.text)
     await message.delete()
     await bot.delete_message(chat_id = message.chat.id, message_id = message.message_id-1)
     await message.answer(text=LEXICON_RU['add_less_add_time_end'])
     await state.set_state(FSM_add_less.Time_end)
 
+# если время начала написано неправильно
+@router_teacher.message(StateFilter(FSM_add_less.Time_start))
+async def err_less_choose_time(message:Message, bot: Bot):
+    await bot.delete_message(chat_id = message.chat.id, message_id = message.message_id-1)
+    await message.reply(text = LEXICON_RU['add_less_add_time_start_err'])
+    await message.delete()
+
 # проверяем, выбрано ли время и переходим к вводу цены
 @router_teacher.message(StateFilter(FSM_add_less.Time_end), F.text.split(':')[0].isdigit() & F.text.split(':')[1].isdigit())
-async def less_choose_subject(message:Message, state: FSMContext, bot: Bot):
+async def less_choose_price(message:Message, state: FSMContext, bot: Bot):
     await state.update_data(time_end = message.text)
     await message.delete()
     await bot.delete_message(chat_id = message.chat.id, message_id = message.message_id-1)
@@ -221,10 +236,17 @@ async def less_choose_subject(message:Message, state: FSMContext, bot: Bot):
     await bot.edit_message_text(text = s, chat_id = message.chat.id, message_id = d['msg_id'])
     await message.answer(text = LEXICON_RU['add_less_add_price'])
     await state.set_state(FSM_add_less.Price)
-    
+
+# если время окончания написано неправильно
+@router_teacher.message(StateFilter(FSM_add_less.Time_end))
+async def err_less_choose_time(message:Message, bot: Bot):
+    await bot.delete_message(chat_id = message.chat.id, message_id = message.message_id-1)
+    await message.reply(text = LEXICON_RU['add_less_add_time_end_err'])
+    await message.delete()
+
 # проверяем, введена ли цена и переходим к выбору количества напоминаний
 @router_teacher.message(StateFilter(FSM_add_less.Price), F.text.isdigit())
-async def less_choose_subject(message:Message, state: FSMContext, bot: Bot):
+async def less_choose_memo_less(message:Message, state: FSMContext, bot: Bot):
     await state.update_data(price = message.text)
     await message.delete()
     await bot.delete_message(chat_id = message.chat.id, message_id = message.message_id-1)
@@ -237,23 +259,33 @@ async def less_choose_subject(message:Message, state: FSMContext, bot: Bot):
         reply_markup = keyboard_utils.markup_memo_less
     )
     await state.set_state(FSM_add_less.Memo_less)
-    
+
+# если цена написана неправильно
+@router_teacher.message(StateFilter(FSM_add_less.Price))
+async def err_less_choose_time(message:Message, bot: Bot):
+    await bot.delete_message(chat_id = message.chat.id, message_id = message.message_id-1)
+    await message.reply(text = LEXICON_RU['add_less_add_price_err'])
+    await message.delete()
+
 # проверяем, нажата ли кнопка и переходим к добавлению напоминания
 @router_teacher.callback_query(StateFilter(FSM_add_less.Memo_less), F.data.in_(['1','2','3','4']))
-async def less_choose_subject(callback:CallbackQuery, state: FSMContext, bot: Bot):
+async def less_choose_memo_1_t(callback:CallbackQuery, state: FSMContext, bot: Bot):
     await callback.message.delete()
     await state.update_data(memo_less = callback.data)
     # Редактируем информацию о занятии
     d = await state.get_data()
     s = fill_lesson_list(d)
     await bot.edit_message_text(text = s, chat_id = callback.message.chat.id, message_id = d['msg_id'])
-    await callback.message.answer(text='Выбор предмета')
-    await state.set_state(FSM_add_less.Memo_1_t)
+    await callback.message.answer(
+        text='Эта функция пока еще не работает полноценно, поэтому просто запишется циферка',
+        reply_markup = keyboard_utils.markup_memo_pay
+        )
+    await state.set_state(FSM_add_less.Memo_pay)
+    #await state.set_state(FSM_add_less.Memo_1_t)
     
-
 # проверяем, нажата ли кнопка 0 и переходим к напоминанию об оплате
 @router_teacher.callback_query(StateFilter(FSM_add_less.Memo_less), F.data.in_(['0']))
-async def less_choose_subject(callback:CallbackQuery, state: FSMContext, bot: Bot):
+async def less_choose_memo_pay(callback:CallbackQuery, state: FSMContext, bot: Bot):
     await callback.message.delete()
     await state.update_data(memo_less = callback.data)
     # Редактируем информацию о занятии
@@ -266,43 +298,65 @@ async def less_choose_subject(callback:CallbackQuery, state: FSMContext, bot: Bo
         )
     await state.set_state(FSM_add_less.Memo_pay)
 
-# если нажата кнопка "да" 
+# если кнопка выбора количества напоминаний не нажата
+@router_teacher.message(StateFilter(FSM_add_less.Memo_less))
+async def err_less_choose_memo_less(message:Message, bot: Bot):
+    # Удаляем неправильное сообщение 
+    await message.delete()
+    #Редактируем сообщение с кнопками
+    await bot.edit_message_text(
+        text = LEXICON_RU['add_less_add_memo_less_err'], 
+        reply_markup = keyboard_utils.markup_memo_less,
+        chat_id = message.chat.id, 
+        message_id = message.message_id-1
+    )
+
+# если нажата кнопка "да" в напоминании об оплате
 @router_teacher.callback_query(StateFilter(FSM_add_less.Memo_pay), F.data.in_(['yes']))
-async def less_choose_subject(callback:CallbackQuery, state: FSMContext, bot: Bot):
+async def less_pay_yes_end(callback:CallbackQuery, state: FSMContext, bot: Bot):
     await callback.message.delete()
     await state.update_data(memo_pay = True)
     # Редактируем информацию о занятии
     d = await state.get_data()
+    await bot.delete_message(chat_id = callback.message.chat.id, message_id = d['msg_id'])
     #Вносим информацию в БД
     db.add_lesson(int(d['student'].split(',')[0]), d['subject'], d['name_less'], 
                   d['data_less'], d['time_start'] +' - ' + d['time_end'], 
                   int(d['price']), int(d['memo_less']), d['memo_pay'], 
                   callback.from_user.id)
-    s = fill_lesson_list(d)+'\n'+LEXICON_RU['add_less_end']
-    await bot.edit_message_text(text = s, chat_id = callback.message.chat.id, message_id = d['msg_id'])
+    s = LEXICON_RU['add_less_end'] + fill_lesson_list(d)+'\n'
+    await callback.message.answer(text = s)
     await state.clear()
 
-# если нажата кнопка "нет" 
+# если нажата кнопка "нет" в напоминании об оплате
 @router_teacher.callback_query(StateFilter(FSM_add_less.Memo_pay), F.data.in_(['no']))
-async def less_choose_subject(callback:CallbackQuery, state: FSMContext, bot: Bot):
+async def less_pay_no_end(callback:CallbackQuery, state: FSMContext, bot: Bot):
     await callback.message.delete()
     await state.update_data(memo_pay = False)
     # Редактируем информацию о занятии
     d = await state.get_data()
+    await bot.delete_message(chat_id = callback.message.chat.id, message_id = d['msg_id'])
     #Вносим информацию в БД
     db.add_lesson(int(d['student'].split(',')[0]), d['subject'], d['name_less'], 
                   d['data_less'], d['time_start'] +' - ' + d['time_end'], 
                   int(d['price']), int(d['memo_less']), d['memo_pay'], 
                   callback.from_user.id)
-    s = fill_lesson_list(d)+'\n'+LEXICON_RU['add_less_end']
-    await bot.edit_message_text(text = s, chat_id = callback.message.chat.id, message_id = d['msg_id'])
+    s = LEXICON_RU['add_less_end'] + fill_lesson_list(d)+'\n'
+    await callback.message.answer(text = s)
     await state.clear()
 
-# если не нажата кнопка
-@router_teacher.callback_query(StateFilter(FSM_add_less.Memo_pay))
-async def less_choose_subject(message: Message, state: FSMContext):
+# если не нажата кнопка в напоминании об оплате
+@router_teacher.message(StateFilter(FSM_add_less.Memo_pay))
+async def err_less_choose_memo_pay(message:Message, bot: Bot):
+    # Удаляем неправильное сообщение 
     await message.delete()
-    await message.answer(text=LEXICON_RU['err_add_less_add_memo_pay'])
+    #Редактируем сообщение с кнопками
+    await bot.edit_message_text(
+        text = LEXICON_RU['add_less_add_memo_pay_err'], 
+        reply_markup = keyboard_utils.markup_memo_pay,
+        chat_id = message.chat.id, 
+        message_id = message.message_id-1
+    )
     
 
 
